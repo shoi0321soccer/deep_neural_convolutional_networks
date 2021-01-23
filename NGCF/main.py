@@ -10,23 +10,41 @@ import torch.optim as optim
 from NGCF import NGCF
 from utility.helper import *
 from utility.batch_test import *
+from utility.process_music import *
+from utility.matrix import *
 
 import warnings
 warnings.filterwarnings('ignore')
 from time import time
-
+import sys
 
 if __name__ == '__main__':
 
     args.device = torch.device('cuda:' + str(args.gpu_id))
-
     plain_adj, norm_adj, mean_adj = data_generator.get_adj_mat()
+    print(norm_adj.shape)
+    sys.exit()
+    norm_adj, u_features, v_features, test_playlists, \
+    train_playlists_count, playlists_tracks = process_mpd(0, 10000)
+    
+    n_users, n_items = norm_adj.shape
+    print(n_users, n_items)
+    exist_users = []
+    train_items = []
+    count_zero_pid = 0
 
+    for i in range(n_users):
+      train_items.append(norm_adj[i].indices)
+      if len(norm_adj[i].indices) == 0:
+        count_zero_pid += 1
+        continue
+      exist_users.append(i)
+    
+    t_n_users = n_users - count_zero_pid
     args.node_dropout = eval(args.node_dropout)
     args.mess_dropout = eval(args.mess_dropout)
 
-    model = NGCF(data_generator.n_users,
-                 data_generator.n_items,
+    model = NGCF(n_users, n_items,
                  norm_adj,
                  args).to(args.device)
 
@@ -43,15 +61,19 @@ if __name__ == '__main__':
     for epoch in range(args.epoch):
         t1 = time()
         loss, mf_loss, emb_loss = 0., 0., 0.
-        n_batch = data_generator.n_train // args.batch_size + 1
+        n_batch = n_users // args.batch_size + 1
 
         for idx in range(n_batch):
-            users, pos_items, neg_items = data_generator.sample()
+            users, pos_items, neg_items = sample(args.batch_size, t_n_users, \
+                                                  exist_users, train_items, n_items)
+            print(len(users), len(pos_items), len(neg_items))
+            print(np.array(users).max(), np.array(pos_items).max(), np.array(neg_items).max())
             u_g_embeddings, pos_i_g_embeddings, neg_i_g_embeddings = model(users,
                                                                            pos_items,
                                                                            neg_items,
                                                                            drop_flag=args.node_dropout_flag)
-
+            print(u_g_embeddings.shape, pos_i_g_embeddings.shape, neg_i_g_embeddings.shape)
+            sys.exit()
             batch_loss, batch_mf_loss, batch_emb_loss = model.create_bpr_loss(u_g_embeddings,
                                                                               pos_i_g_embeddings,
                                                                               neg_i_g_embeddings)
