@@ -35,6 +35,7 @@ if __name__ == '__main__':
     *********************************************************
     Train.
     """
+    print(">>>Train")
     cur_best_pre_0, stopping_step = 0, 0
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
@@ -67,7 +68,6 @@ if __name__ == '__main__':
                 perf_str = 'Epoch %d [%.1fs]: train==[%.5f=%.5f + %.5f]' % (
                     epoch, time() - t1, loss, mf_loss, emb_loss)
                 print(perf_str)
-            continue
 
         t2 = time()
         users_to_test = list(data_generator.test_set.keys())
