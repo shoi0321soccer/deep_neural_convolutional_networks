@@ -112,7 +112,7 @@ def test_one_user(x):
 def test(model, users_to_test, drop_flag=False, batch_test_flag=False):
     result = {'precision': np.zeros(len(Ks)), 'recall': np.zeros(len(Ks)), 'ndcg': np.zeros(len(Ks)),
               'hit_ratio': np.zeros(len(Ks)), 'auc': 0.}
-
+    print(">>>Test")
     pool = multiprocessing.Pool(cores)
 
     u_batch_size = BATCH_SIZE * 2
@@ -149,7 +149,6 @@ def test(model, users_to_test, drop_flag=False, batch_test_flag=False):
                                                                   drop_flag=False)
                     print(len(user_batch), len(item_batch))
                     print(u_g_embeddings.shape, pos_i_g_embeddings.shape)
-                    sys.exit()
                     i_rate_batch = model.rating(u_g_embeddings, pos_i_g_embeddings).detach().cpu()
 
                 else:
