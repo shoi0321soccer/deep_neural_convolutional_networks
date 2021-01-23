@@ -109,10 +109,10 @@ def test_one_user(x):
     return get_performance(user_pos_test, r, auc, Ks)
 
 
-def test(model, users_to_test, drop_flag=False, batch_test_flag=False):
+def test(model, users_to_test, drop_flag=False, batch_test_flag=True):
+    
     result = {'precision': np.zeros(len(Ks)), 'recall': np.zeros(len(Ks)), 'ndcg': np.zeros(len(Ks)),
               'hit_ratio': np.zeros(len(Ks)), 'auc': 0.}
-
     pool = multiprocessing.Pool(cores)
 
     u_batch_size = BATCH_SIZE * 2
@@ -123,7 +123,8 @@ def test(model, users_to_test, drop_flag=False, batch_test_flag=False):
     n_user_batchs = n_test_users // u_batch_size + 1
 
     count = 0
-
+    print(">>>Test start")
+    final_rate_batch = []
     for u_batch_id in range(n_user_batchs):
         start = u_batch_id * u_batch_size
         end = (u_batch_id + 1) * u_batch_size
@@ -147,11 +148,7 @@ def test(model, users_to_test, drop_flag=False, batch_test_flag=False):
                                                                   item_batch,
                                                                   [],
                                                                   drop_flag=False)
-                    print(len(user_batch), len(item_batch))
-                    print(u_g_embeddings.shape, pos_i_g_embeddings.shape)
-                    sys.exit()
                     i_rate_batch = model.rating(u_g_embeddings, pos_i_g_embeddings).detach().cpu()
-
                 else:
                     u_g_embeddings, pos_i_g_embeddings, _ = model(user_batch,
                                                                   item_batch,
@@ -161,6 +158,7 @@ def test(model, users_to_test, drop_flag=False, batch_test_flag=False):
 
                 rate_batch[:, i_start: i_end] = i_rate_batch
                 i_count += i_rate_batch.shape[1]
+                #print(rate_batch.shape, u_g_embeddings.shape, pos_i_g_embeddings.shape)
 
             assert i_count == ITEM_NUM
 
@@ -180,19 +178,23 @@ def test(model, users_to_test, drop_flag=False, batch_test_flag=False):
                                                               [],
                                                               drop_flag=True)
                 rate_batch = model.rating(u_g_embeddings, pos_i_g_embeddings).detach().cpu()
+            
+        #user_batch_rating_uid = zip(rate_batch.numpy(), user_batch)
+        # user_batch_rating_uid = zip(rate_batch, user_batch)
+        # batch_result = pool.map(test_one_user, user_batch_rating_uid)
+        # count += len(batch_result)
+        final_rate_batch.append(rate_batch)
+        print(len(final_rate_batch), final_rate_batch[0].shape)
 
-        user_batch_rating_uid = zip(rate_batch.numpy(), user_batch)
-        batch_result = pool.map(test_one_user, user_batch_rating_uid)
-        count += len(batch_result)
-
-        for re in batch_result:
-            result['precision'] += re['precision']/n_test_users
-            result['recall'] += re['recall']/n_test_users
-            result['ndcg'] += re['ndcg']/n_test_users
-            result['hit_ratio'] += re['hit_ratio']/n_test_users
-            result['auc'] += re['auc']/n_test_users
+        # for re in batch_result:
+        #     result['precision'] += re['precision']/n_test_users
+        #     result['recall'] += re['recall']/n_test_users
+        #     result['ndcg'] += re['ndcg']/n_test_users
+        #     result['hit_ratio'] += re['hit_ratio']/n_test_users
+        #     result['auc'] += re['auc']/n_test_users
 
 
-    assert count == n_test_users
+    #assert count == n_test_users
+    print(len(final_rate_batch))
     pool.close()
-    return result
+    return final_rate_batch
