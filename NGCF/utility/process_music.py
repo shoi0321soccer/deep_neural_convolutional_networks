@@ -13,12 +13,13 @@ def main_process(playlists_tracks, test_playlists, train_playlists_count, batch_
     dv = DictVectorizer()
     dv.fit_transform(playlists_tracks)
     index = 0
+    rating_matrix = np.load(rate_file_path + str(0) + ".npy")
     with tqdm(total=10000) as pbar:
         with open(output_file, 'w') as fout:
             print('team_info,shoiTK,creative,shoi0321soccer@gmail.com', file=fout)
             for i, playlist in enumerate(test_playlists):
                 playlist_pos = i
-                b_index = i % (batch_size*2)
+                b_index = i % batch_size
                 if b_index == 0 and i != 0:
                   index += 1
                   rating_matrix = np.load(rate_file_path + str(index+1) + ".npy")
@@ -126,30 +127,32 @@ def process_mpd(max_slice, max_challenge_slice):
     #playlist_pathのロード
     key_errors = 0
     time_slice = 0
-    for filename in sorted(filenames):
-        if filename.startswith("mpd.slice") and filename.endswith(".json"):
-            fullpath = os.sep.join((playlists_path, filename))
-            #print(fullpath)
-            f = open(fullpath, "r")
-            js = f.read()
-            f.close()
-            mpd_slice = json.loads(js)
-            time_slice += 1
-            if max_slice < time_slice:
-                break
-            for playlist in mpd_slice['playlists']:
-                try:
-                    nname = normalize_name(playlist['name'])
-                except KeyError:
-                    key_errors += 1
-                playlists_extra['name'].append(nname)
-                tracks = defaultdict(int)
-                sorted_tracks = sorted(playlist['tracks'], key=lambda k: k['pos'])
-                for track in sorted_tracks:
-                    track_uri_key = track['track_uri']
-                    tracks[track_uri_key] += 1
-                playlists_tracks.append(tracks)
-                playlists.append(str(playlist['pid']))
+    with tqdm(total=max_slice) as pbar:
+      for filename in sorted(filenames):
+            if filename.startswith("mpd.slice") and filename.endswith(".json"):
+              fullpath = os.sep.join((playlists_path, filename))
+              #print(fullpath)
+              f = open(fullpath, "r")
+              js = f.read()
+              f.close()
+              mpd_slice = json.loads(js)
+              time_slice += 1
+              if max_slice < time_slice:
+                  break
+              for playlist in mpd_slice['playlists']:
+                  try:
+                      nname = normalize_name(playlist['name'])
+                  except KeyError:
+                      key_errors += 1
+                  playlists_extra['name'].append(nname)
+                  tracks = defaultdict(int)
+                  sorted_tracks = sorted(playlist['tracks'], key=lambda k: k['pos'])
+                  for track in sorted_tracks:
+                      track_uri_key = track['track_uri']
+                      tracks[track_uri_key] += 1
+                  playlists_tracks.append(tracks)
+                  playlists.append(str(playlist['pid']))
+              pbar.update(1)
     if key_errors != 0:
         print("KeyErrors:" + str(key_errors))
 

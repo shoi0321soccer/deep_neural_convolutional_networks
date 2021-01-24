@@ -70,13 +70,25 @@ def create_adj_mat(n_users, n_items, R, path):
 
     #adj_mat[:n_users, n_users:] = R
     # adj_mat[n_users:, :n_users] = R.T
-    min_batch_load = 5000
+    min_batch_load = 2500
+    min_batch_v = 100000
     times = n_users//min_batch_load
+    min_times = n_items//min_batch_v
     for i in tqdm(range(times)):
-      tmp_R = R[i:i+min_batch_load]
-      adj_mat[i:i+min_batch_load, n_users:] = tmp_R
-      adj_mat[n_users:, i:i+min_batch_load] = tmp_R.T
-    
+      u_start = i*min_batch_load
+      u_end = (i+1)min_batch_load
+      for j in range(min_times):
+        v_start = j*min_batch_v
+        v_end = (j+1)*min_batch_v
+        tmp_R = R[u_start:u_end, v_start:v_end]
+        adj_mat[u_start:u_end, n_users+ v_start:n_users+v_end] = tmp_R
+        adj_mat[n_users+ v_start:n_users+v_end, u_start:u_end] = tmp_R.T
+        if j == min_times-1:
+          tmp_j = n_items % min_batch_v
+          tmp_R = R[u_start:u_end, v_end:v_end+tmp_j]
+          adj_mat[u_start:u_end, n_users+v_end:n_users+v_end+tmp_j] = tmp_R
+          adj_mat[n_users+v_end:n_users+v_end+tmp_j, u_start:u_end] = tmp_R.T
+
     adj_mat = adj_mat.todok()
     print('already create adjacency matrix', adj_mat.shape, time() - t1)
 

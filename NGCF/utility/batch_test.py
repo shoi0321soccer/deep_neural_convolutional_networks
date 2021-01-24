@@ -117,7 +117,7 @@ def test(model, users_to_test, ITEM_NUM, drop_flag=False, batch_test_flag=True):
               'hit_ratio': np.zeros(len(Ks)), 'auc': 0.}
     pool = multiprocessing.Pool(cores)
 
-    u_batch_size = BATCH_SIZE * 2
+    u_batch_size = BATCH_SIZE
     i_batch_size = BATCH_SIZE
 
     test_users = users_to_test
