@@ -154,8 +154,7 @@ def process_mpd(max_slice, max_challenge_slice):
     target = json.load(open(target_playlists))
     train_playlists_count = len(playlists)
     test_playlists_recommended_sum = []
-    print("len_playlists =", max_challenge_slice, str(len(target["playlists"])))
-    
+
     i=0
     for playlist in target["playlists"]:
         i+=1
@@ -218,10 +217,10 @@ def process_mpd(max_slice, max_challenge_slice):
     item_feat = sparse.hstack((eye, item_prev))
 
 
-    print("num_track", len_dv_feature_names)
-    print("max_NUMCLASSES: ",interaction_matrix.max())
-    print("item_feat_shape", item_feat.shape)
-    print("user_feat_shape", playlist_features_concat.shape)
+    # print("num_track", len_dv_feature_names)
+    # print("max_NUMCLASSES: ",interaction_matrix.max())
+    # print("item_feat_shape", item_feat.shape)
+    # print("user_feat_shape", playlist_features_concat.shape)
     print("Features matrix created.")
 
     return interaction_matrix, playlist_features_concat, item_feat, test_playlists, train_playlists_count, playlists_tracks 

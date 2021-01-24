@@ -2,6 +2,8 @@ import numpy as np
 import random as rd
 import scipy.sparse as sp
 from time import time
+import sys
+from tqdm import tqdm
 
 def sample(batch_size, n_users, exist_users, train_items, n_items):
   if batch_size <= n_users:
@@ -66,8 +68,15 @@ def create_adj_mat(n_users, n_items, R, path):
     adj_mat = adj_mat.tolil()
     R = R.tolil()
 
-    adj_mat[:n_users, n_users:] = R
-    adj_mat[n_users:, :n_users] = R.T
+    #adj_mat[:n_users, n_users:] = R
+    # adj_mat[n_users:, :n_users] = R.T
+    min_batch_load = 5000
+    times = n_users//min_batch_load
+    for i in tqdm(range(times)):
+      tmp_R = R[i:i+min_batch_load]
+      adj_mat[i:i+min_batch_load, n_users:] = tmp_R
+      adj_mat[n_users:, i:i+min_batch_load] = tmp_R.T
+    
     adj_mat = adj_mat.todok()
     print('already create adjacency matrix', adj_mat.shape, time() - t1)
 
