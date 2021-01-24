@@ -12,6 +12,7 @@ import multiprocessing
 import heapq
 import sys
 import numpy as np
+from tqdm import tqdm
 
 cores = multiprocessing.cpu_count() // 2
 
@@ -126,7 +127,7 @@ def test(model, users_to_test, ITEM_NUM, drop_flag=False, batch_test_flag=True):
     count = 0
     print(">>>Test start")
     final_rate_batch = []
-    for u_batch_id in range(n_user_batchs):
+    for u_batch_id in tqdm(range(n_user_batchs)):
         start = u_batch_id * u_batch_size
         end = (u_batch_id + 1) * u_batch_size
 
@@ -184,8 +185,10 @@ def test(model, users_to_test, ITEM_NUM, drop_flag=False, batch_test_flag=True):
         # user_batch_rating_uid = zip(rate_batch, user_batch)
         # batch_result = pool.map(test_one_user, user_batch_rating_uid)
         # count += len(batch_result)
-        final_rate_batch.append(rate_batch)
-        print(len(final_rate_batch), final_rate_batch[0].shape)
+        save_path = "./rate_batch_result/rate_batch" + str(u_batch_id)
+        np.save(save_path, rate_batch)
+        #final_rate_batch.append(rate_batch)
+        #print(len(final_rate_batch), final_rate_batch[0].shape)
 
         # for re in batch_result:
         #     result['precision'] += re['precision']/n_test_users

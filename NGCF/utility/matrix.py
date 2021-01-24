@@ -53,7 +53,7 @@ def get_adj_mat(n_users, n_items, R, path):
       print("find play_adj file")
       t1 = time()
       norm_adj_mat = sp.load_npz(path + '/play_norm_adj_mat.npz')
-      print('already load adj matrix', adj_mat.shape, time() - t1)
+      #print('already load adj matrix', adj_mat.shape, time() - t1)
 
     except Exception:
       print("not find play_adj file")
