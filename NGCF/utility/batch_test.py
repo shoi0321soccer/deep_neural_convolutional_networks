@@ -11,15 +11,16 @@ from utility.load_data import *
 import multiprocessing
 import heapq
 import sys
+import numpy as np
 
 cores = multiprocessing.cpu_count() // 2
 
 args = parse_args()
 Ks = eval(args.Ks)
 
-data_generator = Data(path=args.data_path + args.dataset, batch_size=args.batch_size)
-USR_NUM, ITEM_NUM = data_generator.n_users, data_generator.n_items
-N_TRAIN, N_TEST = data_generator.n_train, data_generator.n_test
+# data_generator = Data(path=args.data_path + args.dataset, batch_size=args.batch_size)
+# USR_NUM, ITEM_NUM = data_generator.n_users, data_generator.n_items
+# N_TRAIN, N_TEST = data_generator.n_train, data_generator.n_test
 BATCH_SIZE = args.batch_size
 
 def ranklist_by_heapq(user_pos_test, test_items, rating, Ks):
@@ -84,7 +85,7 @@ def get_performance(user_pos_test, r, auc, Ks):
             'ndcg': np.array(ndcg), 'hit_ratio': np.array(hit_ratio), 'auc': auc}
 
 
-def test_one_user(x):
+def test_one_user(x, ITEM_NUM):
     # user u's ratings for user u
     rating = x[0]
     #uid
@@ -109,7 +110,7 @@ def test_one_user(x):
     return get_performance(user_pos_test, r, auc, Ks)
 
 
-def test(model, users_to_test, drop_flag=False, batch_test_flag=True):
+def test(model, users_to_test, ITEM_NUM, drop_flag=False, batch_test_flag=True):
     
     result = {'precision': np.zeros(len(Ks)), 'recall': np.zeros(len(Ks)), 'ndcg': np.zeros(len(Ks)),
               'hit_ratio': np.zeros(len(Ks)), 'auc': 0.}

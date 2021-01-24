@@ -5,19 +5,22 @@ import os.path
 
 ESSENTIA_PATH = '../../drive/MyDrive/essentia/{}/{}/{}.mp3.json'
 
-def main_process(user_embeddings, item_embeddings, playlists_tracks, test_playlists, train_playlists_count):
-    print(user_embeddings.shape)
-    print(len(item_embeddings))
-    output_file = 'output_lightFM.csv'    
+def main_process(rating_matrix, playlists_tracks, test_playlists, train_playlists_count, batch_size):
+
+    output_file = 'output_ngcf_epochs_400.csv'    
     fuse_perc = 0.7
     dv = DictVectorizer()
     dv.fit_transform(playlists_tracks)
+    index = 0
     with open(output_file, 'w') as fout:
         print('team_info,shoiTK,creative,shoi0321soccer@gmail.com', file=fout)
         for i, playlist in enumerate(test_playlists):
             playlist_pos = i
-            print(playlist_pos)
-            y_pred = user_embeddings[playlist_pos].dot(item_embeddings[playlist_pos].T) #+ item_biases
+            b_index = i % (batch_size*2)
+            if b_index == 0 and i != 0:
+              index += 1
+            y_pred = rating_matrix[index][b_index]
+            #y_pred = user_embeddings[playlist_pos].dot(item_embeddings[playlist_pos].T) #+ item_biases
             topn = np.argsort(-y_pred)[:len(playlists_tracks[playlist_pos])+1000]
             rets = [(dv.feature_names_[t], float(y_pred[t])) for t in topn]
             songids = [s for s, _ in rets if s not in playlists_tracks[playlist_pos]]

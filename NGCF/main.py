@@ -21,21 +21,22 @@ import sys
 if __name__ == '__main__':
 
     args.device = torch.device('cuda:' + str(args.gpu_id))
-    plain_adj, norm_adj, mean_adj = data_generator.get_adj_mat()
-    print(norm_adj.shape)
-    sys.exit()
-    norm_adj, u_features, v_features, test_playlists, \
+    #plain_adj, norm_adj, mean_adj = data_generator.get_adj_mat()
+    adj_matrix, u_features, v_features, test_playlists, \
     train_playlists_count, playlists_tracks = process_mpd(0, 10000)
+    users_to_test = [i for i in range(10000)]
     
-    n_users, n_items = norm_adj.shape
-    print(n_users, n_items)
+    n_users, n_items = adj_matrix.shape
+    path = "../Data/mpd"
+    norm_adj = get_adj_mat(n_users, n_items, adj_matrix, path)
+    print(n_users, n_items, norm_adj.shape)
     exist_users = []
     train_items = []
     count_zero_pid = 0
 
     for i in range(n_users):
-      train_items.append(norm_adj[i].indices)
-      if len(norm_adj[i].indices) == 0:
+      train_items.append(adj_matrix[i].indices)
+      if len(adj_matrix[i].indices) == 0:
         count_zero_pid += 1
         continue
       exist_users.append(i)
@@ -66,14 +67,13 @@ if __name__ == '__main__':
         for idx in range(n_batch):
             users, pos_items, neg_items = sample(args.batch_size, t_n_users, \
                                                   exist_users, train_items, n_items)
-            print(len(users), len(pos_items), len(neg_items))
-            print(np.array(users).max(), np.array(pos_items).max(), np.array(neg_items).max())
+            # print(len(users), len(pos_items), len(neg_items))
+            # print(np.array(users).max(), np.array(pos_items).max(), np.array(neg_items).max())
             u_g_embeddings, pos_i_g_embeddings, neg_i_g_embeddings = model(users,
                                                                            pos_items,
                                                                            neg_items,
                                                                            drop_flag=args.node_dropout_flag)
-            print(u_g_embeddings.shape, pos_i_g_embeddings.shape, neg_i_g_embeddings.shape)
-            sys.exit()
+            #print(u_g_embeddings.shape, pos_i_g_embeddings.shape, neg_i_g_embeddings.shape)
             batch_loss, batch_mf_loss, batch_emb_loss = model.create_bpr_loss(u_g_embeddings,
                                                                               pos_i_g_embeddings,
                                                                               neg_i_g_embeddings)
@@ -85,17 +85,12 @@ if __name__ == '__main__':
             mf_loss += batch_mf_loss
             emb_loss += batch_emb_loss
 
-        if (epoch + 1) % 10 != 0:
-            if args.verbose > 0 and epoch % args.verbose == 0:
-                perf_str = 'Epoch %d [%.1fs]: train==[%.5f=%.5f + %.5f]' % (
-                    epoch, time() - t1, loss, mf_loss, emb_loss)
-                print(perf_str)
+        if args.verbose > 0 and epoch % args.verbose == 0:
+            perf_str = 'Epoch %d [%.1fs]: train==[%.5f=%.5f + %.5f]' % (
+                epoch, time() - t1, loss, mf_loss, emb_loss)
+            print(perf_str)
 
-        t2 = time()
-        users_to_test = list(data_generator.test_set.keys())
-        # ret = test(model, users_to_test, drop_flag=False)
-        rate_matrix = test(model, users_to_test, drop_flag=False)
-        t3 = time()
+        
 
         #loss_loger.append(loss)
         # rec_loger.append(ret['recall'])
@@ -124,7 +119,13 @@ if __name__ == '__main__':
         # if ret['recall'][0] == cur_best_pre_0 and args.save_flag == 1:
         #     torch.save(model.state_dict(), args.weights_path + str(epoch) + '.pkl')
         #     print('save the weights in path: ', args.weights_path + str(epoch) + '.pkl')
-    print("training finish")
+    t2 = time()
+    # ret = test(model, users_to_test, drop_flag=False)
+    rate_matrix = test(model, users_to_test, n_items, drop_flag=False)
+    t3 = time()
+    print("training finish and create output")
+    main_process(rate_matrix, playlists_tracks, test_playlists, train_playlists_count, args.batch_size)
+    print("create output successflly!")
     # recs = np.array(rec_loger)
     # pres = np.array(pre_loger)
     # ndcgs = np.array(ndcg_loger)
