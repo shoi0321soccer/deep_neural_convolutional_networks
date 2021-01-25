@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 
 class NGCF(nn.Module):
-    def __init__(self, n_user, n_item, norm_adj, args):
+    def __init__(self, n_user, n_item, norm_adj, args, u_feature):
         super(NGCF, self).__init__()
         self.n_user = n_user
         self.n_item = n_item
@@ -20,11 +20,17 @@ class NGCF(nn.Module):
         self.node_dropout = args.node_dropout[0]
         self.mess_dropout = args.mess_dropout
         self.batch_size = args.batch_size
-
+        self.u_feature = u_feature
+        self.num_u_feature = u_feature.shape[1]
+        self.dropout = 0.7
         self.norm_adj = norm_adj
 
         self.layers = eval(args.layer_size)
         self.decay = eval(args.regs)[0]
+
+        self.denseu1 = nn.Linear(self.num_u_feature, self.emb_size*(len(self.layers)+1), bias=True)
+        self.denseu2 = nn.Linear(self.emb_size*(len(self.layers)+1)*2, self.emb_size*(len(self.layers)+1), bias=False)
+
 
         """
         *********************************************************
@@ -137,6 +143,8 @@ class NGCF(nn.Module):
             all_embeddings += [norm_embeddings]
 
         all_embeddings = torch.cat(all_embeddings, 1)
+        u_f = torch.relu(self.denseu1(self.u_feature))
+        all_embeddings[:self.n_user] = self.denseu2(F.dropout(torch.cat((all_embeddings[:self.n_user], u_f), 1), self.dropout))
         u_g_embeddings = all_embeddings[:self.n_user, :]
         i_g_embeddings = all_embeddings[self.n_user:, :]
 

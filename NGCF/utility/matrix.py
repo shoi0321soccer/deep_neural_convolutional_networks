@@ -76,7 +76,7 @@ def create_adj_mat(n_users, n_items, R, path):
     min_times = n_items//min_batch_v
     for i in tqdm(range(times)):
       u_start = i*min_batch_load
-      u_end = (i+1)min_batch_load
+      u_end = (i+1)*min_batch_load
       for j in range(min_times):
         v_start = j*min_batch_v
         v_end = (j+1)*min_batch_v

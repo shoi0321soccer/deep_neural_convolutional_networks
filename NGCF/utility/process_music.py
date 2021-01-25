@@ -22,7 +22,7 @@ def main_process(playlists_tracks, test_playlists, train_playlists_count, batch_
                 b_index = i % batch_size
                 if b_index == 0 and i != 0:
                   index += 1
-                  rating_matrix = np.load(rate_file_path + str(index+1) + ".npy")
+                  rating_matrix = np.load(rate_file_path + str(index) + ".npy")
                 y_pred = rating_matrix[b_index]
                 #y_pred = user_embeddings[playlist_pos].dot(item_embeddings[playlist_pos].T) #+ item_biases
                 topn = np.argsort(-y_pred)[:len(playlists_tracks[playlist_pos])+1000]
@@ -192,8 +192,8 @@ def process_mpd(max_slice, max_challenge_slice):
     playlist_features = pfeat
 
     # Need to hstack(行列の連結) playlist_features
-    eye = sparse.eye(playlist_features.shape[0], playlist_features.shape[0]).tocsr()
-    playlist_features_concat = sparse.hstack((eye, playlist_features))
+    #eye = sparse.eye(playlist_features.shape[0], playlist_features.shape[0]).tocsr()
+    #playlist_features_concat = sparse.hstack((eye, playlist_features))
 
     #tracks & genres
     item_prev = []
@@ -230,4 +230,4 @@ def process_mpd(max_slice, max_challenge_slice):
     # print("user_feat_shape", playlist_features_concat.shape)
     print("Features matrix created.")
 
-    return interaction_matrix, playlist_features_concat, item_feat, test_playlists, train_playlists_count, playlists_tracks 
+    return interaction_matrix, playlist_features, item_feat, test_playlists, train_playlists_count, playlists_tracks 

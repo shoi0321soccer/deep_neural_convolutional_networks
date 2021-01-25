@@ -24,9 +24,9 @@ if __name__ == '__main__':
     args.device = torch.device('cuda:' + str(args.gpu_id))
     #plain_adj, norm_adj, mean_adj = data_generator.get_adj_mat()
     adj_matrix, u_features, v_features, test_playlists, \
-    train_playlists_count, playlists_tracks = process_mpd(50, 10000)
+    train_playlists_count, playlists_tracks = process_mpd(0, 10000)
     users_to_test = [i for i in range(10000)]
-    
+    u_features = torch.from_numpy(u_features.toarray()).to(args.device).float()
     n_users, n_items = adj_matrix.shape
     path = "../Data/mpd"
     norm_adj = get_adj_mat(n_users, n_items, adj_matrix, path)
@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     model = NGCF(n_users, n_items,
                  norm_adj,
-                 args).to(args.device)
+                 args, u_features).to(args.device)
 
     t0 = time()
     """
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     # ret = test(model, users_to_test, drop_flag=False)
     rate_matrix = test(model, users_to_test, n_items, drop_flag=False)
     t3 = time()
-    output_file_name = "out_ngcf_e_" + str(args.epoch) + "_u" + str(n_users//10000) + ".csv"
+    output_file_name = "out_ngcf_e_" + str(args.epoch) + "_u_" + str(n_users//1000) + "k.csv"
     print("training finish and create output")
     main_process(playlists_tracks, test_playlists, train_playlists_count, args.batch_size, output_file_name)
     print("create output successflly!")
