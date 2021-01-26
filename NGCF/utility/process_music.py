@@ -19,15 +19,17 @@ def main_process(playlists_tracks, test_playlists, train_playlists_count, batch_
             print('team_info,shoiTK,creative,shoi0321soccer@gmail.com', file=fout)
             for i, playlist in enumerate(test_playlists):
                 playlist_pos = i
+                p_pos_count_plus = playlist_pos + train_playlists_count 
                 b_index = i % batch_size
                 if b_index == 0 and i != 0:
                   index += 1
                   rating_matrix = np.load(rate_file_path + str(index) + ".npy")
                 y_pred = rating_matrix[b_index]
                 #y_pred = user_embeddings[playlist_pos].dot(item_embeddings[playlist_pos].T) #+ item_biases
-                topn = np.argsort(-y_pred)[:len(playlists_tracks[playlist_pos])+1000]
+
+                topn = np.argsort(-y_pred)[:len(playlists_tracks[p_pos_count_plus])+1000]
                 rets = [(dv.feature_names_[t], float(y_pred[t])) for t in topn]
-                songids = [s for s, _ in rets if s not in playlists_tracks[playlist_pos]]
+                songids = [s for s, _ in rets if s not in playlists_tracks[p_pos_count_plus]]
                 songids = sorted(songids,  key=lambda x:x[1], reverse=True)
                 print(' , '.join([playlist] + [x for x in songids[:500]]), file=fout)
                 pbar.update(1)

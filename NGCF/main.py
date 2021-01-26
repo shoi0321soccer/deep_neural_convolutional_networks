@@ -24,7 +24,8 @@ if __name__ == '__main__':
     args.device = torch.device('cuda:' + str(args.gpu_id))
     #plain_adj, norm_adj, mean_adj = data_generator.get_adj_mat()
     adj_matrix, u_features, v_features, test_playlists, \
-    train_playlists_count, playlists_tracks = process_mpd(0, 10000)
+    train_playlists_count, playlists_tracks = process_mpd(1000, 10000)
+    
     users_to_test = [i for i in range(10000)]
     u_features = torch.from_numpy(u_features.toarray()).to(args.device).float()
     n_users, n_items = adj_matrix.shape

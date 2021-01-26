@@ -70,7 +70,7 @@ def create_adj_mat(n_users, n_items, R, path):
 
     #adj_mat[:n_users, n_users:] = R
     # adj_mat[n_users:, :n_users] = R.T
-    min_batch_load = 2500
+    min_batch_load = 1000
     min_batch_v = 100000
     times = n_users//min_batch_load
     min_times = n_items//min_batch_v
